@@ -397,6 +397,12 @@ func (i *Instance) EnterArgs(command []string, interactive bool) []string {
 		"TERM=" + orDefault(os.Getenv("TERM"), "xterm-256color"),
 		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
 	head := append([]string{"runuser", "-u", u.Name, "--"}, env...)
+	// A bare interactive bash (shellN, here N -- bash) is the shell itself: a
+	// bash started from the wrapper would read ~/.bashrc after env.sh and bring
+	// back what env.sh unsets (the host's *_proxy).
+	if interactive && len(command) == 1 && (command[0] == "bash" || command[0] == "/bin/bash") {
+		command = nil
+	}
 	switch {
 	case len(command) == 0:
 		return append(head, "/bin/bash", "--rcfile", GuestDir+"/bashrc", "-i")

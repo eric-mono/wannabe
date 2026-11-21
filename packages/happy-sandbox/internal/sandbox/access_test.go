@@ -173,6 +173,14 @@ func TestEnterArgs(t *testing.T) {
 	if got[len(got)-1] != "claude" || !slices.Contains(got, "-i") {
 		t.Fatalf("interactive command: %q", got)
 	}
+	// shellN runs `here N -- bash`: that is the rcfile shell, not a bash
+	// started from it (which would read ~/.bashrc after env.sh).
+	if got := i.EnterArgs([]string{"bash"}, true); !slices.Equal(got, i.EnterArgs(nil, true)) {
+		t.Fatalf("bare bash: %q", got)
+	}
+	if got := i.EnterArgs([]string{"bash"}, false); slices.Contains(got, "--rcfile") {
+		t.Fatalf("bash without a terminal: %q", got)
+	}
 }
 
 func TestGuestFilesCarryTheEnvironment(t *testing.T) {
