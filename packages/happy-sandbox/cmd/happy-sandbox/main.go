@@ -2,7 +2,7 @@
 // way out is one VLESS exit locked to its IP. Sandboxes are numbered 1, 2, 3…;
 // the number comes right after the command (none: sandbox 1).
 //
-//	happy-sandbox init --node FILE --exit-ip IP [--profile isolated|host] [--timezone TZ] [--locale L] [--share SRC[:TARGET[:ro]]]...
+//	happy-sandbox init --node FILE --exit-ip IP [--profile isolated|host] [--manual] [--timezone TZ] [--locale L] [--share SRC[:TARGET[:ro]]]...
 //	happy-sandbox up | down | restart | status | identity | shell | here [CMD...] | exec -- CMD... | destroy --yes   [N]
 //	happy-sandbox config [N] show | set KEY VALUE | unset KEY | edit | preset host|isolated
 //	happy-sandbox share [N] list | add SRC [TARGET] [--ro] [--submounts] | rm TARGET
@@ -40,14 +40,15 @@ const usage = `happy-sandbox — a Linux sandbox whose only way out is one VLESS
   Sandboxes are numbered 1, 2, 3…: N right after a command picks one
   (happy-sandbox up 2); without it, sandbox 1.
 
-  happy-sandbox init --node FILE --exit-ip IP [--profile isolated|host]
+  happy-sandbox init --node FILE --exit-ip IP [--profile isolated|host] [--manual]
                      [--share SRC[:TARGET[:ro]]]... [--timezone America/New_York]
                      [--locale en_US.UTF-8]
                           create the next sandbox (the lowest free number; FILE: one
                           mihomo node, chmod 600); time zone and locale should match
                           the exit's region. --profile host: the host user, home,
                           /mnt, memory and GPU; only the network (the exit) and the
-                          identity are its own
+                          identity are its own. It starts with the host
+                          (happy-sandbox enable); --manual: only by hand
   happy-sandbox up [N]    start it; the network opens once the exit is IP
   happy-sandbox restart [N]
                           down, then up (applies configuration changes)
@@ -487,6 +488,7 @@ func cmdInit(args []string) error {
 	timezone := fs.String("timezone", sandbox.DefaultTimezone, "IANA time zone of the exit's region")
 	locale := fs.String("locale", sandbox.DefaultLocale, "locale (LANG) of the exit's region")
 	profile := fs.String("profile", "isolated", "isolated, or host: the host user, home, /mnt, memory and GPU (only the network and identity differ)")
+	manual := fs.Bool("manual", false, "do not start it with the host (enable it later: happy-sandbox enable N)")
 	var shares shareList
 	fs.Var(&shares, "share", "SRC[:TARGET[:ro]], repeatable; TARGET defaults to SRC's own path")
 	if err := fs.Parse(rest); err != nil {
@@ -525,8 +527,24 @@ func cmdInit(args []string) error {
 	fmt.Printf("Created sandbox %q in %s (exit %s, access %s).\n", name, inst.Dir, c.ExitIP, c.Access.Describe())
 	printIdentity(inst)
 	writeLinks(name)
+	if !*manual {
+		enableAtInit(inst)
+	}
 	fmt.Println("Next: happy-sandbox up " + name)
 	return nil
+}
+
+// enableAtInit: a new sandbox starts with the host unless init --manual.
+// Without systemd user services it stays started by hand (init still succeeds).
+func enableAtInit(inst *sandbox.Instance) {
+	if err := inst.Enable(context.Background()); err != nil {
+		fmt.Fprintf(os.Stderr, "Not enabled (it starts only by hand): %v\n  Later: happy-sandbox enable %s\n", err, inst.Config.Name)
+		return
+	}
+	fmt.Printf("Enabled %s: it starts with the host (not wanted: happy-sandbox disable %s).\n", inst.Unit(), inst.Config.Name)
+	if !sandbox.Lingering() {
+		fmt.Printf("  For it to start at boot without a login, once: sudo loginctl enable-linger %s\n", os.Getenv("USER"))
+	}
 }
 
 // writeLinks writes a numbered sandbox's commands (claudeN, codexN, happyN,

@@ -166,9 +166,9 @@ happy-sandbox $release is installed. Next:
 
   happy-sandbox init --node NODE.yaml --exit-ip EXIT_IP \\
       [--timezone America/Los_Angeles --locale en_US.UTF-8] [--share ~/proj:/workspace/proj]
+      # it starts with the host (--manual: only by hand)
   happy-sandbox up
   happy-sandbox shell          # then, once: happy auth login, claude, codex login
-  happy-sandbox enable         # optional: start with the host
 
   NODE.yaml: one mihomo proxy (VLESS etc.), chmod 600; EXIT_IP: the public IP it exits from.
   Update: $BIN/install.sh    Remove: $BIN/install.sh --uninstall

@@ -64,9 +64,10 @@ codex login
 ## 命令
 
 ```
-happy-sandbox init --node FILE --exit-ip IP [--profile isolated|host] [--timezone TZ] [--locale L]
+happy-sandbox init --node FILE --exit-ip IP [--profile isolated|host] [--manual] [--timezone TZ] [--locale L]
                    [--share SRC[:TARGET[:ro]]]...
-                                    建下一个沙箱（最小的空闲序号）
+                                    建下一个沙箱（最小的空闲序号），默认跟宿主一起启动；
+                                    --manual：只手动启动
 happy-sandbox up | down | restart | status | shell [N]
 happy-sandbox exec [N] -- CMD...
 happy-sandbox here [N] [CMD...]     在宿主当前目录对应的沙箱路径里运行 CMD（默认一个 shell）
@@ -288,10 +289,14 @@ happy-sandbox restart
 
 ## 跟宿主一起启动
 
+`init` 建的沙箱默认就跟宿主一起启动（`init --manual` 则不会）。之前建的、或 `disable` 过的沙箱：
+
 ```bash
 happy-sandbox enable
 sudo loginctl enable-linger $USER     # 只需一次：不登录也能在开机时启动（宿主级设置，需要管理员）
 ```
+
+宿主上没有 systemd 用户服务时，`init` 照样建好沙箱，只是提示没能启用，之后只能手动 `up`。
 
 `enable` 会为这个沙箱装一个 systemd 用户服务（`happy-sandbox@<名字>.service`）：开机启动；网络进程出错时，15 秒后自动重启，容器不受影响。启用以后 `up` / `down` 会通过 systemd 来执行。`disable` 取消开机启动，并停下沙箱。
 
