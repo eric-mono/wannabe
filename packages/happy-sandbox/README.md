@@ -102,6 +102,9 @@ happy-sandbox version
 | `shellN` | 一个 shell；`shellN CMD...` 运行 CMD |
 
 `HSB_SAFE=1` 时都不加 full access 参数。`init` 会写这些命令，`destroy` 会删掉。
+在沙箱里面直接敲 `happy` / `claude` 不经过这些命令：full access 的沙箱（`tool_args` 给 claude
+`--dangerously-skip-permissions`，新建的沙箱默认都是）在 `up` 时给沙箱自己的 Claude 配置写上
+`permissions.defaultMode: bypassPermissions`，所以也默认 bypass；你自己设过的 defaultMode 不会被改。
 同名的文件如果不是 happy-sandbox 写的（比如你自己的 `codex2`），不会覆盖，会提示你。
 
 每个沙箱的 Claude、Codex、happy 登录各自独立（宿主镜像模式下在 `state/` 里），可以登录
@@ -174,7 +177,7 @@ happy-sandbox config preset host && happy-sandbox restart
 | `resources.ulimits` | 默认 | 文件句柄等上限，默认跟随宿主；`podman` 用 Podman 自己的 |
 | `devices.gpu` | `auto` | `auto`、`none`、`nvidia`、`amd`，或者 NVIDIA 的某一块卡（`0`、UUID），见下 |
 | `devices.extra` | — | 其他设备，例如 `/dev/ttyUSB0` |
-| `tool_args` | Claude / Codex 的 full access 参数 | `happy-sandbox here claude` 时自动加上；`HSB_SAFE=1` 时不加 |
+| `tool_args` | Claude / Codex 的 full access 参数 | `happy-sandbox here claude` 时自动加上；`HSB_SAFE=1` 时不加。隔离预设也默认带，新建的沙箱都是 full access；要权限确认就 `config unset access.tool_args` |
 | `packages` | `openssh-client` | 要一直保留的 apt 包，见下 |
 | `shares` | `/mnt`、`/media`（`submounts`） | 宿主的其他目录，原路径读写 |
 

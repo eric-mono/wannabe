@@ -48,7 +48,8 @@ const usage = `happy-sandbox — a Linux sandbox whose only way out is one VLESS
                           the exit's region. --profile host: the host user, home,
                           /mnt, memory and GPU; only the network (the exit) and the
                           identity are its own. It starts with the host
-                          (happy-sandbox enable); --manual: only by hand
+                          (happy-sandbox enable); --manual: only by hand. Either
+                          profile runs claude / codex with full access (access.tool_args)
   happy-sandbox up [N]    start it; the network opens once the exit is IP
   happy-sandbox restart [N]
                           down, then up (applies configuration changes)
@@ -514,6 +515,7 @@ func cmdInit(args []string) error {
 	}
 	switch *profile {
 	case "isolated":
+		c.Access = sandbox.IsolatedPreset()
 	case "host":
 		c.Access = sandbox.HostPreset()
 		c.Shares = addHostMounts(c.Shares)

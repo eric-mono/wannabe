@@ -402,6 +402,9 @@ func (i *Instance) Ensure(ctx context.Context) (recreated bool, err error) {
 			return false, err
 		}
 	}
+	if err := i.seedClaudeSettings(); err != nil { // after fillHome: the home is there
+		return recreated, err
+	}
 	if st.Status == "stopping" {
 		st = i.settleStopped(ctx)
 	}

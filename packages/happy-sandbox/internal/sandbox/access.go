@@ -106,6 +106,22 @@ func hostDefaultMemory() string {
 	return formatSize((total - keep) &^ (1<<30 - 1))
 }
 
+// FullAccessToolArgs: claude and codex without permission prompts. Every
+// preset has them, so every new sandbox runs its tools with full access
+// (HSB_SAFE=1, or access.tool_args removed, keeps the prompts).
+func FullAccessToolArgs() map[string][]string {
+	return map[string][]string{
+		"claude": {"--dangerously-skip-permissions"},
+		"codex":  {"--dangerously-bypass-approvals-and-sandbox"},
+	}
+}
+
+// IsolatedPreset is the "isolated" profile (the default): the image's user
+// with a home of its own, and the tools with full access.
+func IsolatedPreset() Access {
+	return Access{ToolArgs: FullAccessToolArgs()}
+}
+
 // HostPreset is the "host" profile: the sandbox runs like the host user, with
 // the host's home, /mnt and /media and the GPU (resources are the host's by
 // default), and only the gate and the identity of its own.
@@ -121,11 +137,8 @@ func HostPreset() Access {
 		},
 		Env: EnvSpec{Unset: []string{"http_proxy", "https_proxy", "ftp_proxy", "all_proxy", "no_proxy",
 			"HTTP_PROXY", "HTTPS_PROXY", "FTP_PROXY", "ALL_PROXY", "NO_PROXY"}},
-		Devices: Devices{GPU: "auto"},
-		ToolArgs: map[string][]string{
-			"claude": {"--dangerously-skip-permissions"},
-			"codex":  {"--dangerously-bypass-approvals-and-sandbox"},
-		},
+		Devices:  Devices{GPU: "auto"},
+		ToolArgs: FullAccessToolArgs(),
 		Packages: []string{"openssh-client"},
 	}
 }

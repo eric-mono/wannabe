@@ -46,7 +46,7 @@ func cmdConfig(ctx context.Context, args []string) error {
 			inst.Config.Access = sandbox.HostPreset()
 			inst.Config.Shares = addHostMounts(inst.Config.Shares)
 		case "isolated":
-			inst.Config.Access = sandbox.Access{}
+			inst.Config.Access = sandbox.IsolatedPreset()
 		default:
 			return errors.New("config preset host | isolated")
 		}
